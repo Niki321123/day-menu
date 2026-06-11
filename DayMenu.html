@@ -684,7 +684,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
 
 <script>
 /* ================= AUTO-AKTUALIZACJA ================= */
-const DM_BUILD=3;
+const DM_BUILD=4;
 const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
 (async()=>{
   if(!/^https?:/.test(DM_UPDATE_URL))return; // brak skonfigurowanego serwera aktualizacji
@@ -1697,7 +1697,7 @@ function cloudCard(){
   if(!sbSession)return `<div class="card"><h2>Konto w chmurze — wspólne dane na PC i telefonie</h2>
     <p class="muted" style="margin-bottom:var(--sp-3)">Zaloguj się tym samym kontem na komputerze i telefonie, a wszystkie dane (nastroje, dziennik, fiszki, nawyki…) będą się synchronizować automatycznie. Nagrania i zdjęcie tła pozostają lokalne na każdym urządzeniu.</p>
     <div class="row">
-      <div class="field"><label class="fld">E-mail</label><input type="text" id="sbEmail" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label class="fld">Nazwa użytkownika</label><input type="text" id="sbUser" autocomplete="username" maxlength="20"></div>
       <div class="field"><label class="fld">Hasło (min. 6 znaków)</label><input type="password" id="sbPass" autocomplete="current-password"></div>
     </div>
     <div class="row" style="margin-top:var(--sp-3)">
@@ -1707,7 +1707,7 @@ function cloudCard(){
     <p class="muted" id="sbMsg" style="margin-top:var(--sp-2)"></p>
   </div>`;
   return `<div class="card"><h2>Konto w chmurze</h2>
-    <div class="row"><span class="badge b-good">Zalogowano</span><strong>${esc((sbSession.user&&sbSession.user.email)||"")}</strong></div>
+    <div class="row"><span class="badge b-good">Zalogowano</span><strong>${esc((sbSession.user&&sbSession.user.email||"").replace(/@.*$/,""))}</strong></div>
     <p class="muted" id="sbStatus" style="margin:var(--sp-2) 0">${S.lastCloudSync?"Ostatnia synchronizacja: "+new Date(S.lastCloudSync).toLocaleString("pl-PL"):"Jeszcze nie synchronizowano."}</p>
     <div class="row">
       <button class="btn" id="sbSync">Synchronizuj teraz</button>
@@ -1739,15 +1739,23 @@ function wireCloud(){
   }
 }
 async function sbDoAuth(signup){
-  const email=$("#sbEmail").value.trim(),pass=$("#sbPass").value,msg=$("#sbMsg");
-  if(!/.+@.+\..+/.test(email))return msg.textContent="Podaj poprawny adres e-mail.";
+  const name=$("#sbUser").value.trim().toLowerCase(),pass=$("#sbPass").value,msg=$("#sbMsg");
+  if(!/^[a-z0-9_-]{3,20}$/.test(name))return msg.textContent="Nazwa: 3–20 znaków (litery, cyfry, _ lub -), bez polskich znaków i spacji.";
   if(pass.length<6)return msg.textContent="Hasło musi mieć min. 6 znaków.";
+  const email=name+"@daymenu.local";
   msg.textContent=signup?"Zakładanie konta…":"Logowanie…";
   try{
     if(signup){
-      const j=await sbAuth("signup",{email,password:pass});
-      if(j.access_token){sbSaveSession(j);await firstSync();renderAccount();toast("Konto utworzone — zalogowano")}
-      else msg.textContent="Konto utworzone. Potwierdź adres klikając link w e-mailu, a potem zaloguj się tutaj.";
+      const r=await fetch(SB_URL+"/functions/v1/signup-username",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:name,password:pass})});
+      const jr=await r.json().catch(()=>({}));
+      if(!r.ok){
+        msg.textContent=jr.error==="taken"?"Ta nazwa jest już zajęta — zaloguj się lub wybierz inną."
+          :jr.error==="invalid_username"?"Nazwa: 3–20 znaków (litery, cyfry, _ lub -)."
+          :"Błąd zakładania konta — spróbuj ponownie.";
+        return;
+      }
+      const j=await sbAuth("token?grant_type=password",{email,password:pass});
+      sbSaveSession(j);await firstSync();renderAccount();toast("Konto utworzone — zalogowano");
     }else{
       const j=await sbAuth("token?grant_type=password",{email,password:pass});
       sbSaveSession(j);
@@ -1755,8 +1763,8 @@ async function sbDoAuth(signup){
       renderAccount();toast("Zalogowano do chmury");
     }
   }catch(e){
-    msg.textContent=/invalid login credentials/i.test(e.message)?"Błędny e-mail lub hasło."
-      :/already registered/i.test(e.message)?"To konto już istnieje — użyj „Zaloguj się”."
+    msg.textContent=/invalid login credentials/i.test(e.message)?"Błędna nazwa użytkownika lub hasło."
+      :/already registered/i.test(e.message)?"Ta nazwa jest już zajęta — zaloguj się lub wybierz inną."
       :(e.message||"Błąd połączenia");
   }
 }
