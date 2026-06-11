@@ -683,48 +683,63 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================= AUTO-AKTUALIZACJA ================= */
-const DM_BUILD=5;
+/* ================= AUTO-AKTUALIZACJA =================
+   Wbudowana wersja (DM_BUILD) to "powłoka". Jeśli w IndexedDB jest pobrana
+   nowsza wersja, powłoka zatrzymuje własne skrypty (window.stop) i uruchamia
+   ją w pełnoekranowej ramce (osobne środowisko JS — bez konfliktu zmiennych).
+   Każda uruchomiona wersja sprawdza w tle serwer i pobiera nowsze wydania. */
+const DM_BUILD=6;
 const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
-(async()=>{
-  if(!/^https?:/.test(DM_UPDATE_URL))return; // brak skonfigurowanego serwera aktualizacji
-  let db;
-  try{
-    db=await new Promise((res,rej)=>{const q=indexedDB.open("daymenu_upd",1);
-      q.onupgradeneeded=()=>q.result.createObjectStore("kv");
-      q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
-  }catch(e){return}
-  const get=k=>new Promise((res,rej)=>{const r=db.transaction("kv").objectStore("kv").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
-  const put=(k,v)=>new Promise((res,rej)=>{const r=db.transaction("kv","readwrite").objectStore("kv").put(v,k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
-  try{
-    // 1) jeśli mamy pobraną nowszą wersję — załaduj ją zamiast wbudowanej
-    const cv=(await get("ver"))|0;
-    if(cv>DM_BUILD){
-      const html=await get("html");
-      if(html){
-        if(document.readyState==="loading")await new Promise(r=>addEventListener("DOMContentLoaded",r));
-        document.open();document.write(html);document.close();
-        return;
-      }
+(function(){
+  if(!/^https?:/.test(DM_UPDATE_URL))return;
+  const IN_FRAME=(()=>{try{return window.top!==window}catch(e){return true}})();
+  let flagVer=0;try{flagVer=parseInt(localStorage.getItem("daymenu_upd_ver"),10)||0}catch(e){}
+  if(!IN_FRAME&&flagVer>DM_BUILD){window.stop();bootCached();}
+  else{checkRemote();}
+
+  function openDb(){return new Promise((res,rej)=>{const q=indexedDB.open("daymenu_upd",1);
+    q.onupgradeneeded=()=>q.result.createObjectStore("kv");
+    q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+  function kvGet(k){return openDb().then(d=>new Promise((res,rej)=>{const r=d.transaction("kv").objectStore("kv").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+  function kvPut(k,v){return openDb().then(d=>new Promise((res,rej)=>{const r=d.transaction("kv","readwrite").objectStore("kv").put(v,k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)}))}
+
+  async function bootCached(){
+    let html=null;
+    try{html=await kvGet("html")}catch(e){}
+    if(!html||!html.includes("DM_BUILD")){ // uszkodzony zapis — wróć do wbudowanej wersji
+      try{localStorage.removeItem("daymenu_upd_ver")}catch(e){}
+      location.reload();return;
     }
-    // 2) sprawdź w tle, czy jest nowsza wersja na serwerze
-    const r=await fetch(DM_UPDATE_URL+"version.json?t="+Date.now(),{cache:"no-store"});
-    if(!r.ok)return;
-    const v=await r.json();
-    if((v.build|0)>Math.max(DM_BUILD,cv)){
-      const h=await fetch(DM_UPDATE_URL+"DayMenu.html?b="+v.build,{cache:"no-store"});
+    document.title="Day Menu";
+    document.documentElement.innerHTML='<head><meta charset="utf-8"></head><body style="margin:0;padding:0;overflow:hidden"></body>';
+    const f=document.createElement("iframe");
+    f.allow="microphone; camera; fullscreen; clipboard-read; clipboard-write";
+    f.style.cssText="position:fixed;inset:0;border:0;width:100vw;height:100vh;background:#f6f7f9";
+    f.srcdoc=html;
+    document.body.appendChild(f);
+  }
+
+  async function checkRemote(){
+    try{
+      const r=await fetch(DM_UPDATE_URL+"version.json?t="+Date.now(),{cache:"no-store"});
+      if(!r.ok)return;
+      const v=await r.json();
+      const nb=v.build|0;
+      if(nb<=Math.max(DM_BUILD,flagVer))return;
+      const h=await fetch(DM_UPDATE_URL+"app.html?b="+nb,{cache:"no-store"});
       if(!h.ok)return;
       const html=await h.text();
-      if(!html.includes("DM_BUILD"))return; // sanity check
-      await put("html",html);await put("ver",v.build|0);
+      if(!html.includes("DM_BUILD"))return;
+      await kvPut("html",html);await kvPut("ver",nb);
+      try{localStorage.setItem("daymenu_upd_ver",String(nb))}catch(e){}
       if(document.readyState==="loading")await new Promise(r2=>addEventListener("DOMContentLoaded",r2));
-      if(performance.now()<10000){location.reload()}
+      if(performance.now()<10000){(window.top||window).location.reload()}
       else{
         const t=document.getElementById("toast");
         if(t){t.textContent="Pobrano aktualizację — zostanie zastosowana przy następnym uruchomieniu";t.classList.add("show");setTimeout(()=>t.classList.remove("show"),4000)}
       }
-    }
-  }catch(e){/* offline / brak sieci — pomiń */}
+    }catch(e){/* offline — pomiń */}
+  }
 })();
 </script>
 <script src="lib/pdf.min.js"></script>
