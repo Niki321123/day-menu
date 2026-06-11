@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
@@ -153,10 +153,65 @@ body.has-bg::before{content:"";position:fixed;inset:-24px;z-index:-2;background-
 body.has-bg::after{content:"";position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:var(--bg-overlay,.75)}
 body.has-bg .card,body.has-bg .stat,body.has-bg #sidebar{background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px)}
 body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--surface) 80%,transparent)}
-@media(max-width:760px){body{flex-direction:column}#sidebar{width:100%;min-width:0;height:auto;position:static;flex-direction:row;overflow-x:auto}.nav-group{display:flex;padding:var(--sp-2)}.nav-group h3{display:none}.brand,.side-footer{display:none}#main{height:auto;padding:var(--sp-4)}}
+/* ekran logowania */
+#loginScreen{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:var(--sp-5)}
+#loginScreen[hidden]{display:none}
+#loginScreen .box{max-width:360px;width:100%;text-align:center}
+#loginScreen .logo-tile{width:64px;height:64px;border-radius:18px;margin:0 auto var(--sp-4);background:conic-gradient(from -135deg,#22d3ee,#4ade80,#facc15,#fb923c,#f43f5e,#d946ef,#8b5cf6,#22d3ee);position:relative}
+#loginScreen .logo-tile::after{content:"";position:absolute;left:14px;right:14px;top:24px;bottom:14px;background:#fff;border-radius:8px}
+#loginScreen h1{margin-bottom:var(--sp-2)}
+
+/* ===== TELEFON ===== */
+@media(max-width:760px){
+  body{flex-direction:column}
+  #sidebar{position:sticky;top:0;z-index:50;width:100%;min-width:0;height:auto;display:flex;flex-direction:row;align-items:center;gap:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;border-right:none;border-bottom:1px solid var(--border);padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top));box-shadow:var(--shadow)}
+  #sidebar::-webkit-scrollbar{display:none}
+  .brand,.side-footer{display:none}
+  .nav-group{display:flex;flex:none;padding:0}
+  .nav-group h3{display:none}
+  .nav-btn{flex:none;width:auto;padding:9px 15px;border-radius:99px;font-size:14px;min-height:42px;white-space:nowrap;background:var(--surface-2);margin-right:6px}
+  .nav-btn.active{background:var(--primary);color:var(--primary-text);font-weight:700}
+  body.has-bg #sidebar{background:color-mix(in srgb,var(--surface) 92%,transparent)}
+  #main{height:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}
+  h1{font-size:24px}
+  .sub{font-size:14px;margin-bottom:var(--sp-4)}
+  .card{padding:var(--sp-4)}
+  .grid4,.grid3{grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+  .stat .v{font-size:22px}
+  input[type=text],input[type=number],input[type=date],input[type=time],input[type=password],select,textarea{font-size:16px;min-height:46px}
+  .btn{min-height:46px}
+  .btn.small{min-height:38px}
+  .row>.field,.row>input.field{flex:1 1 100%;min-width:0}
+  .row>input[type=date],.row>input[type=time],.row>select{width:100%!important}
+  .row>div[style*="width"]{flex:1 1 46%;width:auto!important;min-width:0}
+  .list-item{flex-wrap:wrap}
+  .mood-pick button{flex:1 1 44%;justify-content:center}
+  .fcard{height:200px}
+  .fcard .face{font-size:var(--fs-3);padding:var(--sp-4)}
+  .pomo-time{font-size:48px}
+  .mood-chart{height:64px}
+  .bar-row .lbl{width:80px;font-size:11px}
+  .sched-block .time{width:86px;font-size:12px}
+  .tabs{width:100%;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:1;white-space:nowrap}
+  .ring{width:180px;height:180px}
+}
 </style>
 </head>
 <body>
+
+<div id="loginScreen" hidden>
+  <div class="box">
+    <div class="logo-tile" aria-hidden="true"></div>
+    <h1 id="loginHello">Cześć!</h1>
+    <p class="sub">Podaj hasło, aby otworzyć Day Menu.</p>
+    <div class="row">
+      <input type="password" id="loginPass" class="field" placeholder="Hasło" autocomplete="current-password">
+      <button class="btn" id="loginBtn" style="width:100%">Zaloguj się</button>
+    </div>
+  </div>
+</div>
 
 <nav id="sidebar" aria-label="Nawigacja">
   <div class="brand"><span class="dot"></span>Day Menu</div>
@@ -186,6 +241,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
   <div class="nav-group"><h3>Ustawienia</h3>
     <button class="nav-btn" data-view="look">Wygląd</button>
     <button class="nav-btn" data-view="obsidian">Obsidian</button>
+    <button class="nav-btn" data-view="account">Konto</button>
   </div>
   <div class="side-footer">
     <button class="btn ghost small" id="themeBtn" title="Zmień motyw">Motyw</button>
@@ -574,6 +630,21 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
         <input type="range" id="bgBlur" min="0" max="20" step="1"></div>
     </div>
   </div>
+  <div class="card">
+    <h2>Dane</h2>
+    <p class="muted" style="margin-bottom:var(--sp-3)">Kopia wszystkich danych do pliku JSON — możesz ją przenieść między komputerem a telefonem.</p>
+    <div class="row">
+      <button class="btn ghost" id="exportBtn2">Eksportuj dane</button>
+      <button class="btn ghost" id="importBtn2">Importuj dane</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KONTO ============ -->
+<section class="view" id="view-account">
+  <h1>Konto i logowanie</h1>
+  <p class="sub">Lokalny profil z hasłem — przy każdym uruchomieniu aplikacja poprosi o zalogowanie. Wszystko zostaje na tym urządzeniu.</p>
+  <div id="accBox"></div>
 </section>
 
 <!-- ============ OBSIDIAN ============ -->
@@ -601,6 +672,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
   </div>
   <div class="card">
     <h2>Automatyzacja</h2>
+    <p class="muted" style="margin-bottom:var(--sp-2)" id="autoHint" hidden>Na telefonie automatyczny zapis do vaulta nie jest dostępny — używaj przycisków powyżej i pobieraj pliki .md.</p>
     <label class="row" style="cursor:pointer;margin-bottom:var(--sp-2)"><input type="checkbox" id="autoNoteChk" style="width:18px;height:18px;min-height:0;flex:none"> Automatycznie zapisuj notatkę dnia (co 5 minut i przy zamykaniu programu)</label>
     <label class="row" style="cursor:pointer"><input type="checkbox" id="autoBackupChk" style="width:18px;height:18px;min-height:0;flex:none"> Cotygodniowa kopia zapasowa wszystkich danych do vaulta (plik JSON)</label>
     <p class="muted" id="backupStatus" style="margin-top:var(--sp-2)"></p>
@@ -612,7 +684,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
 
 <script>
 /* ================= AUTO-AKTUALIZACJA ================= */
-const DM_BUILD=1;
+const DM_BUILD=2;
 const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
 (async()=>{
   if(!/^https?:/.test(DM_UPDATE_URL))return; // brak skonfigurowanego serwera aktualizacji
@@ -661,7 +733,7 @@ const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
 "use strict";
 /* ================= DATA ================= */
 const KEY="daymenu_v1";
-const defaults={theme:"light",moods:[],journal:[],goals:[],books:[],quizzes:[],decks:[],subjects:[],timelog:[],sched:{tasks:[]},pomoDone:0,sleep:[],appearance:null};
+const defaults={theme:"light",moods:[],journal:[],goals:[],books:[],quizzes:[],decks:[],subjects:[],timelog:[],sched:{tasks:[]},pomoDone:0,sleep:[],appearance:null,habits:[],vaultPath:null,autoNote:true,autoBackup:true,lastBackup:null,jLock:null,account:null};
 let S=load();
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));return Object.assign({},defaults,d||{})}catch(e){return {...defaults}}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S))}
@@ -673,6 +745,14 @@ const today=()=>new Date().toISOString().slice(0,10);
 const fmtDate=d=>new Date(d+"T00:00").toLocaleDateString("pl-PL",{day:"numeric",month:"long",year:"numeric"});
 const fmtMin=m=>{m=Math.round(m);const h=Math.floor(m/60);return h?`${h} h ${m%60} min`:`${m} min`};
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2200)}
+function notify(title,body){
+  try{
+    if(!("Notification" in window))return;
+    if(Notification.permission==="granted")new Notification(title,{body});
+    else if(Notification.permission!=="denied")
+      Notification.requestPermission().then(p=>{if(p==="granted")new Notification(title,{body})});
+  }catch(e){}
+}
 
 /* ================= INDEXEDDB (tło, nagrania, uchwyt vaulta) ================= */
 let _idb=null;
@@ -715,7 +795,7 @@ $("#themeBtn").onclick=()=>{
 applyTheme();loadBg();
 
 /* ================= NAV ================= */
-const renderers={dash:renderDash,mood:renderMood,journal:renderJournal,goals:renderGoals,books:renderBooks,quiz:renderQuiz,cards:renderDecks,study:renderSubjects,pomo:renderPomoStats,timer:renderTT,sched:renderSched,time:renderTime,sleep:renderSleep,media:renderMedia,look:renderLook,obsidian:renderObsidian};
+const renderers={dash:renderDash,mood:renderMood,journal:renderJournal,goals:renderGoals,books:renderBooks,quiz:renderQuiz,cards:renderDecks,study:renderSubjects,pomo:renderPomoStats,timer:renderTT,sched:renderSched,time:renderTime,sleep:renderSleep,media:renderMedia,look:renderLook,obsidian:renderObsidian,habits:renderHabits,account:renderAccount};
 $$(".nav-btn").forEach(b=>b.onclick=()=>show(b.dataset.view));
 function show(v){
   $$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
@@ -730,7 +810,7 @@ const MOODS=["Bardzo źle","Źle","Neutralnie","Dobrze","Świetnie"];
 const MOOD_COLORS=["var(--bad)","var(--accent)","var(--warn)","var(--primary)","var(--good)"];
 function renderDash(){
   const h=new Date().getHours();
-  $("#dashHello").textContent=(h<5?"Dobrej nocy":h<12?"Dzień dobry":h<18?"Cześć":"Dobry wieczór")+"!";
+  $("#dashHello").textContent=(h<5?"Dobrej nocy":h<12?"Dzień dobry":h<18?"Cześć":"Dobry wieczór")+(S.account?", "+S.account.name:"")+"!";
   $("#dashDate").textContent=new Date().toLocaleDateString("pl-PL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const due=dueCards().length;
   const m=S.moods.find(x=>x.date===today());
@@ -742,6 +822,7 @@ function renderDash(){
     <div class="stat"><div class="v">${sl?fmtMin(sleepMin(sl)):"—"}</div><div class="l">Sen ostatniej nocy</div></div>
     <div class="stat"><div class="v">${due}</div><div class="l">Fiszki do powtórki</div></div>
     <div class="stat"><div class="v">${fmtMin(pomoToday)}</div><div class="l">Pomodoro dzisiaj</div></div>
+    <div class="stat"><div class="v">${S.habits.length?S.habits.filter(h=>h.days[today()]).length+"/"+S.habits.length:"—"}</div><div class="l">Nawyki dzisiaj</div></div>
     <div class="stat"><div class="v">${reading}</div><div class="l">Książki w trakcie</div></div>`;
   const gs=S.goals.filter(g=>g.steps.some(s=>!s.done)||!g.steps.length).slice(0,4);
   $("#dashGoals").innerHTML=gs.length?gs.map(g=>{
@@ -788,11 +869,70 @@ $("#moodSave").onclick=()=>{
   save();renderMood();toast("Nastrój zapisany ✓");
 };
 
-/* ================= JOURNAL ================= */
-let jrnEditId=null;
+/* ================= JOURNAL (z szyfrowaniem) ================= */
+let jrnEditId=null,JR=null,jKey=null;
+const J=()=>S.jLock?(JR||[]):S.journal;
+function setJ(a){if(S.jLock)JR=a;else S.journal=a}
+const _te=new TextEncoder(),_td=new TextDecoder();
+const b64=buf=>{const u=new Uint8Array(buf);let s="";for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)};
+const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function jDerive(pass,salt){
+  const km=await crypto.subtle.importKey("raw",_te.encode(pass),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:ub64(salt),iterations:150000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function jPersist(){
+  if(!S.jLock)return save();
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const data=await crypto.subtle.encrypt({name:"AES-GCM",iv},jKey,_te.encode(JSON.stringify(JR||[])));
+  S.jLock.iv=b64(iv);S.jLock.data=b64(data);S.journal=[];save();
+}
+async function jUnlock(pass){
+  try{
+    const key=await jDerive(pass,S.jLock.salt);
+    if(S.jLock.data){
+      const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub64(S.jLock.iv)},key,ub64(S.jLock.data));
+      JR=JSON.parse(_td.decode(pt));
+    }else JR=[];
+    jKey=key;return true;
+  }catch(e){return false}
+}
+function renderJrnLock(){
+  const el=$("#jrnLockCard");
+  if(!S.jLock){
+    el.innerHTML=`<div class="row"><input type="password" id="jp1" class="field" placeholder="Hasło do dziennika (min. 4 znaki)"><button class="btn ghost" id="jpSet">Zaszyfruj dziennik</button></div>
+      <p class="muted" style="margin-top:var(--sp-2)">Po zaszyfrowaniu wpisy są czytelne dopiero po podaniu hasła. Zapamiętaj je dobrze — nie da się go odzyskać.</p>`;
+    $("#jpSet").onclick=async()=>{
+      const p=$("#jp1").value;
+      if(p.length<4)return toast("Hasło musi mieć min. 4 znaki");
+      S.jLock={salt:b64(crypto.getRandomValues(new Uint8Array(16))),iv:null,data:null};
+      jKey=await jDerive(p,S.jLock.salt);JR=S.journal.slice();
+      await jPersist();renderJournal();toast("Dziennik zaszyfrowany");
+    };
+  }else if(!jKey){
+    el.innerHTML=`<div class="row"><input type="password" id="jp2" class="field" placeholder="Podaj hasło, aby odblokować dziennik"><button class="btn" id="jpOpen">Odblokuj</button></div>`;
+    $("#jpOpen").onclick=async()=>{
+      if(await jUnlock($("#jp2").value)){renderJournal();toast("Dziennik odblokowany")}
+      else toast("Błędne hasło");
+    };
+    $("#jp2").onkeydown=e=>{if(e.key==="Enter")$("#jpOpen").click()};
+  }else{
+    el.innerHTML=`<div class="row"><span class="badge b-good">Dziennik odblokowany w tej sesji</span>
+      <button class="btn small ghost" id="jpLockNow">Zablokuj teraz</button>
+      <button class="btn small danger" id="jpRemove">Usuń szyfrowanie</button></div>`;
+    $("#jpLockNow").onclick=()=>{jKey=null;JR=null;renderJournal()};
+    $("#jpRemove").onclick=()=>{
+      if(!confirm("Usunąć szyfrowanie? Wpisy będą znów zapisane jawnie."))return;
+      S.journal=JR||[];S.jLock=null;jKey=null;JR=null;save();renderJournal();toast("Szyfrowanie usunięte");
+    };
+  }
+}
 function renderJournal(){
+  renderJrnLock();
+  const locked=S.jLock&&!jKey;
+  $("#jrnEditorCard").hidden=locked;
+  if(locked){$("#jrnList").innerHTML="";return}
   if(!$("#jrnDate").value)$("#jrnDate").value=today();
-  const list=[...S.journal].sort((a,b)=>b.date.localeCompare(a.date));
+  const list=[...J()].sort((a,b)=>b.date.localeCompare(a.date));
   $("#jrnList").innerHTML=list.length?list.map(e=>`
     <div class="card"><div class="row" style="justify-content:space-between">
       <div><strong style="font-size:var(--fs-3)">${esc(e.title)||"(bez tytułu)"}</strong><div class="muted">${fmtDate(e.date)}</div></div>
@@ -800,21 +940,21 @@ function renderJournal(){
     </div><p style="margin-top:var(--sp-2);white-space:pre-wrap">${esc(e.text)}</p></div>`).join("")
     :`<div class="empty">Twój dziennik jest pusty. Napisz pierwszy wpis powyżej.</div>`;
   $$("#jrnList [data-edit]").forEach(b=>b.onclick=()=>{
-    const e=S.journal.find(x=>x.id===b.dataset.edit);
+    const e=J().find(x=>x.id===b.dataset.edit);
     jrnEditId=e.id;$("#jrnTitle").value=e.title;$("#jrnDate").value=e.date;$("#jrnText").value=e.text;
     $("#jrnFormTitle").textContent="Edycja wpisu";$("#jrnCancel").hidden=false;$("#main").scrollTop=0;
   });
   $$("#jrnList [data-del]").forEach(b=>b.onclick=()=>{
     if(!confirm("Usunąć ten wpis?"))return;
-    S.journal=S.journal.filter(x=>x.id!==b.dataset.del);save();renderJournal();
+    setJ(J().filter(x=>x.id!==b.dataset.del));jPersist();renderJournal();
   });
 }
 $("#jrnSave").onclick=()=>{
   const text=$("#jrnText").value.trim();
   if(!text)return toast("Wpis nie może być pusty");
-  if(jrnEditId){const e=S.journal.find(x=>x.id===jrnEditId);e.title=$("#jrnTitle").value.trim();e.date=$("#jrnDate").value||today();e.text=text;}
-  else S.journal.push({id:uid(),title:$("#jrnTitle").value.trim(),date:$("#jrnDate").value||today(),text});
-  jrnReset();save();renderJournal();toast("Wpis zapisany ✓");
+  if(jrnEditId){const e=J().find(x=>x.id===jrnEditId);e.title=$("#jrnTitle").value.trim();e.date=$("#jrnDate").value||today();e.text=text;}
+  else J().push({id:uid(),title:$("#jrnTitle").value.trim(),date:$("#jrnDate").value||today(),text});
+  jrnReset();jPersist();renderJournal();toast("Wpis zapisany ✓");
 };
 $("#jrnCancel").onclick=()=>{jrnReset();};
 function jrnReset(){jrnEditId=null;$("#jrnTitle").value="";$("#jrnText").value="";$("#jrnDate").value=today();$("#jrnFormTitle").textContent="Nowy wpis";$("#jrnCancel").hidden=true}
@@ -939,6 +1079,22 @@ function startQuiz(id){
   $("#quizHome").hidden=true;$("#quizEdit").hidden=true;$("#quizPlay").hidden=false;
   renderPlayQ();
 }
+function startDeckQuiz(deckId){
+  const d=S.decks.find(x=>x.id===deckId);
+  if(!d||d.cards.length<4)return toast("Talia musi mieć min. 4 fiszki");
+  const cards=[...d.cards].sort(()=>Math.random()-.5).slice(0,15);
+  const backs=[...new Set(d.cards.map(c=>c.back))];
+  const questions=cards.map(c=>{
+    const wrong=backs.filter(b=>b!==c.back).sort(()=>Math.random()-.5).slice(0,3);
+    const options=[c.back,...wrong].sort(()=>Math.random()-.5);
+    return {q:c.front,options,correct:options.indexOf(c.back)};
+  }).filter(q=>q.options.length>=2);
+  if(!questions.length)return toast("Za mało różnych odpowiedzi w talii");
+  show("quiz");
+  play={quiz:{name:d.name+" — quiz z fiszek",questions,ephemeral:true,deckId},i:0,score:0,order:questions};
+  $("#quizHome").hidden=true;$("#quizEdit").hidden=true;$("#quizPlay").hidden=false;
+  renderPlayQ();
+}
 function renderPlayQ(){
   const q=play.order[play.i];
   $("#quizPlayCard").innerHTML=`
@@ -954,8 +1110,10 @@ function renderPlayQ(){
 }
 function endQuiz(){
   const pct=Math.round(play.score/play.order.length*100);
-  if(play.quiz.best==null||pct>play.quiz.best)play.quiz.best=pct;
-  save();
+  if(!play.quiz.ephemeral){
+    if(play.quiz.best==null||pct>play.quiz.best)play.quiz.best=pct;
+    save();
+  }
   $("#quizPlayCard").innerHTML=`
     <div style="text-align:center;padding:var(--sp-5)">
       <h2 style="font-size:var(--fs-6)">${pct}%</h2>
@@ -964,8 +1122,8 @@ function endQuiz(){
       <button class="btn" id="quizAgain">Jeszcze raz</button>
       <button class="btn ghost" id="quizDone">Wróć do listy</button>
     </div>`;
-  $("#quizAgain").onclick=()=>startQuiz(play.quiz.id);
-  $("#quizDone").onclick=renderQuiz;
+  $("#quizAgain").onclick=()=>play.quiz.ephemeral?startDeckQuiz(play.quiz.deckId):startQuiz(play.quiz.id);
+  $("#quizDone").onclick=()=>play.quiz.ephemeral?show("cards"):renderQuiz();
 }
 
 /* ================= FLASHCARDS + SPACED REPETITION ================= */
@@ -983,12 +1141,14 @@ function renderDecks(){
     return `<div class="list-item"><div style="flex:1"><strong>${esc(d.name)}</strong>
       <div class="muted">${d.cards.length} fiszek${due?` · <span style="color:var(--accent);font-weight:600">${due} do powtórki</span>`:" · wszystko powtórzone ✓"}</div></div>
       <button class="btn small ${due?'accent':''}" data-study="${d.id}" ${d.cards.length?"":"disabled"}>Ucz się${due?` (${due})`:""}</button>
+      <button class="btn small ghost" data-dq="${d.id}" ${d.cards.length>=4?"":"disabled"} title="Quiz ABCD z fiszek tej talii (min. 4 fiszki)">Quiz</button>
       <button class="btn small ghost" data-edit="${d.id}">Fiszki</button>
       <button class="icon-btn del" data-del="${d.id}" title="Usuń talię">✕</button></div>`;
   }).join(""):`<div class="empty">Brak talii. Utwórz pierwszą i dodaj fiszki.</div>`;
   $$("#deckList [data-edit]").forEach(b=>b.onclick=()=>openDeck(b.dataset.edit));
   $$("#deckList [data-del]").forEach(b=>b.onclick=()=>{if(confirm("Usunąć talię ze wszystkimi fiszkami?")){S.decks=S.decks.filter(d=>d.id!==b.dataset.del);save();renderDecks();updateDuePill()}});
   $$("#deckList [data-study]").forEach(b=>b.onclick=()=>startStudy(b.dataset.study));
+  $$("#deckList [data-dq]").forEach(b=>b.onclick=()=>startDeckQuiz(b.dataset.dq));
   updateDuePill();
 }
 $("#deckAdd").onclick=()=>{
@@ -1125,8 +1285,8 @@ $("#pomoStart").onclick=()=>{
       if(pomo.mode==="work"){
         const min=Math.round(pomo.total/60);
         S.pomoDone++;S.timelog.push({id:uid(),name:"Sesja Pomodoro",category:"Pomodoro",estimate:min,actual:min,date:today()});
-        save();toast("Sesja ukończona! Czas na przerwę.");renderPomoStats();pomoSetMode("break");
-      }else{toast("Przerwa skończona — wracamy do pracy!");pomoSetMode("work");}
+        save();toast("Sesja ukończona! Czas na przerwę.");notify("Pomodoro ukończone","Dobra robota — czas na przerwę.");renderPomoStats();pomoSetMode("break");
+      }else{toast("Przerwa skończona — wracamy do pracy!");notify("Koniec przerwy","Wracamy do pracy.");pomoSetMode("work");}
     }
   },1000);
 };
@@ -1230,26 +1390,45 @@ $("#schAdd").onclick=()=>{
   $("#schName").value="";$("#schDur").value="";save();renderSched();
 };
 $("#schClear").onclick=()=>{if(confirm("Usunąć wszystkie zadania z listy?")){S.sched.tasks=[];save();renderSched();$("#schResultCard").hidden=true}};
+let lastSchedule=null;
 $("#schGen").onclick=()=>{
   if(!S.sched.tasks.length)return toast("Najpierw dodaj zadania");
   const [h,m]=$("#schStart").value.split(":").map(Number);
   let cur=h*60+m;const brk=+$("#schBreak").value||0;
   const sorted=[...S.sched.tasks].sort((a,b)=>a.prio-b.prio);
   const fmt=t=>`${String(Math.floor(t/60)%24).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
-  let html="";
+  const blocks=[];let html="";
   sorted.forEach((t,i)=>{
     html+=`<div class="sched-block"><div class="time">${fmt(cur)}–${fmt(cur+t.dur)}</div>
       <div class="blk"><strong>${esc(t.name)}</strong> <span class="muted">(${fmtMin(t.dur)})</span></div></div>`;
+    blocks.push({name:t.name,start:cur,end:cur+t.dur});
     cur+=t.dur;
     if(brk&&i<sorted.length-1){
       html+=`<div class="sched-block"><div class="time">${fmt(cur)}–${fmt(cur+brk)}</div>
         <div class="blk brk">Przerwa</div></div>`;
+      blocks.push({name:"Przerwa",start:cur,end:cur+brk});
       cur+=brk;
     }
   });
   html+=`<p class="muted" style="margin-top:var(--sp-3)">Koniec dnia: <strong>${fmt(cur)}</strong> · łącznie ${fmtMin(sorted.reduce((a,t)=>a+t.dur,0))} pracy</p>`;
+  lastSchedule={date:today(),blocks};
   $("#schResult").innerHTML=html;$("#schResultCard").hidden=false;
   toast("Harmonogram gotowy");
+};
+$("#schIcs").onclick=()=>{
+  if(!lastSchedule)return toast("Najpierw wygeneruj harmonogram");
+  const d=lastSchedule.date.replace(/-/g,"");
+  const pad=t=>String(Math.floor(t/60)%24).padStart(2,"0")+String(t%60).padStart(2,"0")+"00";
+  const now=new Date().toISOString().replace(/[-:.]/g,"").slice(0,15)+"Z";
+  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Day Menu//PL\r\n";
+  lastSchedule.blocks.forEach((b,i)=>{
+    ics+=`BEGIN:VEVENT\r\nUID:daymenu-${d}-${i}@local\r\nDTSTAMP:${now}\r\nDTSTART:${d}T${pad(b.start)}\r\nDTEND:${d}T${pad(b.end)}\r\nSUMMARY:${b.name.replace(/[\\;,]/g," ")}\r\nEND:VEVENT\r\n`;
+  });
+  ics+="END:VCALENDAR\r\n";
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
+  a.download=`plan-dnia-${lastSchedule.date}.ics`;a.click();URL.revokeObjectURL(a.href);
+  toast("Plik .ics pobrany — otwórz go w swoim kalendarzu");
 };
 
 /* ================= TIME ANALYSIS ================= */
@@ -1286,16 +1465,175 @@ function renderTime(){
       <div class="bar" style="width:${Math.max(2,v/dmax*70)}%"></div><div class="val">${v?fmtMin(v):"—"}</div></div>`;
   }
   $("#timeByDay").innerHTML=dayHtml;
+  renderCorr();
+}
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function renderCorr(){
+  const days=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
+    const s=S.sleep.find(x=>x.date===ds),m=S.moods.find(x=>x.date===ds);
+    const prod=S.timelog.filter(t=>t.date===ds&&(t.actual||0)>0).reduce((a,t)=>a+t.actual,0);
+    days.push({ds,d,sleep:s?sleepMin(s):null,mood:m?m.mood:null,prod});
+  }
+  const ins=[];
+  const both=days.filter(x=>x.sleep!=null&&x.mood!=null);
+  const shortM=both.filter(x=>x.sleep<420),longM=both.filter(x=>x.sleep>=420);
+  if(shortM.length>=3&&longM.length>=3)
+    ins.push(`Po nocach krótszych niż 7 h Twój średni nastrój to <strong>${(avg(shortM.map(x=>x.mood))+1).toFixed(1)}/5</strong>, a po dłuższych — <strong>${(avg(longM.map(x=>x.mood))+1).toFixed(1)}/5</strong>.`);
+  const bp=days.filter(x=>x.sleep!=null&&x.prod>0);
+  const shortP=bp.filter(x=>x.sleep<420),longP=bp.filter(x=>x.sleep>=420);
+  if(shortP.length>=3&&longP.length>=3)
+    ins.push(`Zmierzona praca po krótkim śnie to średnio <strong>${fmtMin(avg(shortP.map(x=>x.prod)))}</strong> dziennie, a po 7+ godzinach snu — <strong>${fmtMin(avg(longP.map(x=>x.prod)))}</strong>.`);
+  $("#corrInsights").innerHTML=ins.length?ins.map(t=>`<p style="margin-bottom:var(--sp-2)">${t}</p>`).join("")
+    :`<p class="muted">Zapisuj sen, nastrój i czas pracy przez co najmniej kilka dni, a tutaj pojawią się wnioski o zależnościach między nimi.</p>`;
+  let rows="";
+  for(const x of days.slice(-14)){
+    const col=x.sleep==null?"var(--surface-2)":x.sleep<360?"var(--bad)":x.sleep<420?"var(--warn)":"var(--good)";
+    rows+=`<div class="bar-row"><div class="lbl">${x.d.toLocaleDateString("pl-PL",{weekday:"short",day:"numeric",month:"short"})}</div>
+      <div class="bar" style="width:${Math.max(2,Math.min((x.sleep||0)/600,1)*46)}%;background:${col}" title="Sen"></div>
+      <span class="mood-dot" style="background:${x.mood!=null?MOOD_COLORS[x.mood]:"var(--surface-2)"}" title="${x.mood!=null?MOODS[x.mood]:"brak nastroju"}"></span>
+      <div class="val">${x.sleep!=null?fmtMin(x.sleep):"—"} · ${x.prod?fmtMin(x.prod)+" pracy":"—"}</div></div>`;
+  }
+  $("#corrChart").innerHTML=rows;
+}
+
+/* ================= NAWYKI ================= */
+function habitStreak(h){
+  let n=0;const d=new Date();
+  if(!h.days[today()])d.setDate(d.getDate()-1);
+  while(h.days[d.toISOString().slice(0,10)]){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function renderHabits(){
+  const t=today();
+  const done=S.habits.filter(h=>h.days[t]).length;
+  $("#habSummary").textContent=S.habits.length?`Dzisiaj: ${done} z ${S.habits.length}`:"";
+  $("#habList").innerHTML=S.habits.length?S.habits.map(h=>{
+    let week="";
+    for(let i=6;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
+      week+=`<span title="${ds}${h.days[ds]?" — zrobione":""}" style="width:20px;height:20px;border-radius:6px;display:inline-block;margin-left:4px;background:${h.days[ds]?"var(--good)":"var(--surface-2)"}"></span>`;
+    }
+    const st=habitStreak(h);
+    return `<div class="list-item">
+      <input type="checkbox" data-h="${h.id}" ${h.days[t]?"checked":""} style="width:20px;height:20px;min-height:0;flex:none" aria-label="Odhacz: ${esc(h.name)}">
+      <div style="flex:1"><strong>${esc(h.name)}</strong>
+        <div class="muted">${st?`Seria: ${st} ${st===1?"dzień":"dni"}`:"Zacznij serię już dziś"}</div></div>
+      <div aria-hidden="true">${week}</div>
+      <button class="icon-btn del" data-del="${h.id}" title="Usuń nawyk">✕</button></div>`;
+  }).join(""):`<div class="empty">Dodaj pierwszy nawyk powyżej.</div>`;
+  $$("#habList [data-h]").forEach(c=>c.onchange=()=>{
+    const h=S.habits.find(x=>x.id===c.dataset.h);
+    if(c.checked)h.days[t]=true;else delete h.days[t];
+    save();renderHabits();
+  });
+  $$("#habList [data-del]").forEach(b=>b.onclick=()=>{
+    if(!confirm("Usunąć nawyk wraz z historią?"))return;
+    S.habits=S.habits.filter(h=>h.id!==b.dataset.del);save();renderHabits();
+  });
+}
+$("#habAdd").onclick=()=>{
+  const n=$("#habName").value.trim();
+  if(!n)return toast("Wpisz nazwę nawyku");
+  S.habits.push({id:uid(),name:n,days:{}});
+  $("#habName").value="";save();renderHabits();toast("Nawyk dodany");
+};
+
+/* ================= KONTO / LOGOWANIE ================= */
+async function accHash(pass,salt){
+  const km=await crypto.subtle.importKey("raw",_te.encode(pass),"PBKDF2",false,["deriveBits"]);
+  return b64(await crypto.subtle.deriveBits({name:"PBKDF2",salt:ub64(salt),iterations:150000,hash:"SHA-256"},km,256));
+}
+function showLogin(){
+  if(!S.account){$("#loginScreen").hidden=true;return}
+  $("#loginScreen").hidden=false;
+  $("#loginHello").textContent="Cześć, "+S.account.name+"!";
+  $("#loginPass").value="";
+  setTimeout(()=>$("#loginPass").focus(),100);
+}
+$("#loginBtn").onclick=async()=>{
+  if((await accHash($("#loginPass").value,S.account.salt))===S.account.hash){
+    $("#loginScreen").hidden=true;renderDash();
+  }else{toast("Błędne hasło");$("#loginPass").value="";$("#loginPass").focus()}
+};
+$("#loginPass").onkeydown=e=>{if(e.key==="Enter")$("#loginBtn").click()};
+function renderAccount(){
+  const el=$("#accBox");
+  if(!S.account){
+    el.innerHTML=`<div class="card"><h2>Włącz logowanie</h2>
+      <div class="row">
+        <div class="field"><label class="fld">Twoje imię</label><input type="text" id="accName" placeholder="Jak się do Ciebie zwracać?"></div>
+        <div class="field"><label class="fld">Hasło (min. 4 znaki)</label><input type="password" id="accP1"></div>
+        <div class="field"><label class="fld">Powtórz hasło</label><input type="password" id="accP2"></div>
+      </div>
+      <button class="btn" id="accCreate" style="margin-top:var(--sp-3)">Utwórz profil i włącz logowanie</button>
+      <p class="muted" style="margin-top:var(--sp-2)">Hasło chroni dostęp do aplikacji na tym urządzeniu. Nie da się go odzyskać — zapamiętaj je dobrze.</p></div>`;
+    $("#accCreate").onclick=async()=>{
+      const n=$("#accName").value.trim(),p1=$("#accP1").value,p2=$("#accP2").value;
+      if(!n)return toast("Podaj imię");
+      if(p1.length<4)return toast("Hasło musi mieć min. 4 znaki");
+      if(p1!==p2)return toast("Hasła się różnią");
+      const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+      S.account={name:n,salt,hash:await accHash(p1,salt)};
+      save();renderAccount();toast("Logowanie włączone");
+    };
+  }else{
+    el.innerHTML=`
+      <div class="card"><h2>Profil</h2>
+        <div class="row"><span class="badge b-good">Logowanie włączone</span><strong style="font-size:var(--fs-3)">${esc(S.account.name)}</strong></div>
+        <div class="row" style="margin-top:var(--sp-3)">
+          <input type="text" id="accNewName" class="field" placeholder="Nowe imię">
+          <button class="btn small ghost" id="accRename">Zmień imię</button>
+        </div>
+      </div>
+      <div class="card"><h2>Zmiana hasła</h2>
+        <div class="row">
+          <div class="field"><label class="fld">Obecne hasło</label><input type="password" id="accOld"></div>
+          <div class="field"><label class="fld">Nowe hasło</label><input type="password" id="accN1"></div>
+          <div class="field"><label class="fld">Powtórz nowe</label><input type="password" id="accN2"></div>
+        </div>
+        <button class="btn" id="accChange" style="margin-top:var(--sp-3)">Zmień hasło</button>
+      </div>
+      <div class="card"><h2>Wyłączenie logowania</h2>
+        <div class="row">
+          <input type="password" id="accDelPass" class="field" placeholder="Obecne hasło">
+          <button class="btn danger" id="accRemove">Wyłącz logowanie</button>
+        </div>
+      </div>`;
+    $("#accRename").onclick=()=>{
+      const n=$("#accNewName").value.trim();
+      if(!n)return toast("Podaj nowe imię");
+      S.account.name=n;save();renderAccount();toast("Imię zmienione");
+    };
+    $("#accChange").onclick=async()=>{
+      if((await accHash($("#accOld").value,S.account.salt))!==S.account.hash)return toast("Obecne hasło jest błędne");
+      const p1=$("#accN1").value,p2=$("#accN2").value;
+      if(p1.length<4)return toast("Nowe hasło musi mieć min. 4 znaki");
+      if(p1!==p2)return toast("Nowe hasła się różnią");
+      const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+      S.account.salt=salt;S.account.hash=await accHash(p1,salt);
+      save();renderAccount();toast("Hasło zmienione");
+    };
+    $("#accRemove").onclick=async()=>{
+      if((await accHash($("#accDelPass").value,S.account.salt))!==S.account.hash)return toast("Błędne hasło");
+      if(!confirm("Wyłączyć logowanie? Aplikacja będzie otwierać się bez hasła."))return;
+      S.account=null;save();renderAccount();toast("Logowanie wyłączone");
+    };
+  }
 }
 
 /* ================= EXPORT / IMPORT ================= */
-$("#exportBtn").onclick=()=>{
+function doExport(){
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));
   a.download=`daymenu-kopia-${today()}.json`;a.click();URL.revokeObjectURL(a.href);
   toast("Kopia zapasowa pobrana");
-};
+}
+$("#exportBtn").onclick=doExport;
+$("#exportBtn2").onclick=doExport;
 $("#importBtn").onclick=()=>$("#importFile").click();
+$("#importBtn2").onclick=()=>$("#importFile").click();
 $("#importFile").onchange=e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -1589,8 +1927,10 @@ let obsDir=null;
 function allDates(){
   const set=new Set();
   S.moods.forEach(x=>set.add(x.date));S.sleep.forEach(x=>set.add(x.date));
-  S.journal.forEach(x=>set.add(x.date));S.timelog.forEach(x=>set.add(x.date));
+  (S.jLock&&!jKey?[]:J()).forEach(x=>set.add(x.date));
+  S.timelog.forEach(x=>set.add(x.date));
   S.subjects.forEach(s=>s.sessions.forEach(x=>set.add(x.date)));
+  S.habits.forEach(h=>Object.keys(h.days).forEach(d=>set.add(d)));
   return [...set].sort();
 }
 async function buildNote(ds){
@@ -1599,8 +1939,16 @@ async function buildNote(ds){
   if(m)L.push("## Nastrój",`- ${MOODS[m.mood]}${m.note?" — "+m.note:""}`,"");
   const sl=S.sleep.find(x=>x.date===ds);
   if(sl)L.push("## Sen",`- ${sl.bed}–${sl.wake} (${fmtMin(sleepMin(sl))}), jakość ${sl.quality}/5${sl.note?" — "+sl.note:""}`,"");
-  const js=S.journal.filter(x=>x.date===ds);
-  if(js.length){L.push("## Dziennik");js.forEach(e=>L.push(`### ${e.title||"(bez tytułu)"}`,e.text,""));}
+  if(S.jLock&&!jKey){
+    if(S.jLock.data)L.push("## Dziennik","- (wpisy zaszyfrowane — odblokuj dziennik, aby je wyeksportować)","");
+  }else{
+    const js=J().filter(x=>x.date===ds);
+    if(js.length){L.push("## Dziennik");js.forEach(e=>L.push(`### ${e.title||"(bez tytułu)"}`,e.text,""));}
+  }
+  if(S.habits.length){
+    const hl=S.habits.filter(h=>Object.keys(h.days).length||ds===today());
+    if(hl.length)L.push("## Nawyki",...hl.map(h=>`- [${h.days[ds]?"x":" "}] ${h.name}`),"");
+  }
   const st=[];
   S.subjects.forEach(s=>s.sessions.filter(x=>x.date===ds).forEach(x=>st.push(`- ${s.name}: ${fmtMin(x.minutes)}${x.note?" — "+x.note:""}`)));
   if(st.length)L.push("## Nauka",...st,"");
@@ -1638,15 +1986,42 @@ function downloadText(name,content){
   a.href=URL.createObjectURL(new Blob([content],{type:"text/markdown"}));
   a.download=name;a.click();URL.revokeObjectURL(a.href);
 }
+const isDesktop=!!window.dayMenuAPI;
+async function vaultOk(){
+  if(isDesktop)return !!S.vaultPath;
+  return !!(await ensureObsDir());
+}
+async function vaultWrite(name,content){
+  if(isDesktop){
+    if(!S.vaultPath)throw new Error("brak folderu");
+    return window.dayMenuAPI.writeFile(S.vaultPath,name,content);
+  }
+  if(!(await ensureObsDir())||!(await ensurePerm()))throw new Error("brak uprawnień");
+  return writeNote(name,content);
+}
 async function renderObsidian(){
-  await ensureObsDir();
-  $("#obsSupport").hidden="showDirectoryPicker" in window;
-  $("#obsStatus").innerHTML=obsDir
-    ?`Połączono z folderem: <strong>${esc(obsDir.name)}</strong>. Notatki zapisują się jako „Day Menu RRRR-MM-DD.md”.`
+  if(!isDesktop)await ensureObsDir();
+  $("#obsSupport").hidden=isDesktop||"showDirectoryPicker" in window;
+  const where=isDesktop?S.vaultPath:(obsDir&&obsDir.name);
+  $("#obsStatus").innerHTML=where
+    ?`Połączono z folderem: <strong>${esc(where)}</strong>. Notatki zapisują się jako „Day Menu RRRR-MM-DD.md”.`
     :"Nie wybrano folderu — notatki będą pobierane jako pliki .md do przeniesienia ręcznie.";
   if(!$("#obsDate").value)$("#obsDate").value=today();
+  $("#autoNoteChk").checked=!!S.autoNote;
+  $("#autoBackupChk").checked=!!S.autoBackup;
+  $("#autoHint").hidden=isDesktop||"showDirectoryPicker" in window;
+  $("#backupStatus").textContent=S.lastBackup
+    ?`Ostatnia kopia zapasowa: ${S.lastBackup}.`
+    :"Kopia zapasowa nie była jeszcze wykonana.";
 }
+$("#autoNoteChk").onchange=()=>{S.autoNote=$("#autoNoteChk").checked;save()};
+$("#autoBackupChk").onchange=()=>{S.autoBackup=$("#autoBackupChk").checked;save()};
 $("#obsConnect").onclick=async()=>{
+  if(isDesktop){
+    const p=await window.dayMenuAPI.chooseFolder();
+    if(p){S.vaultPath=p;save();renderObsidian();toast("Folder vaulta połączony")}
+    return;
+  }
   if(!("showDirectoryPicker" in window))return toast("Ta przeglądarka nie obsługuje wyboru folderu");
   try{
     obsDir=await showDirectoryPicker({mode:"readwrite"});
@@ -1657,17 +2032,15 @@ $("#obsConnect").onclick=async()=>{
 $("#obsGen").onclick=async()=>{
   const ds=$("#obsDate").value||today();
   const md=await buildNote(ds);
-  if(await ensureObsDir()&&await ensurePerm()){
-    try{await writeNote(`Day Menu ${ds}.md`,md);toast("Notatka zapisana w vaulcie")}
-    catch(e){downloadText(`Day Menu ${ds}.md`,md);toast("Błąd zapisu — pobrano plik .md")}
-  }else downloadText(`Day Menu ${ds}.md`,md);
+  try{await vaultWrite(`Day Menu ${ds}.md`,md);toast("Notatka zapisana w vaulcie")}
+  catch(e){downloadText(`Day Menu ${ds}.md`,md);toast("Pobrano plik .md — wskaż folder vaulta, aby zapisywać bezpośrednio")}
 };
 $("#obsGenAll").onclick=async()=>{
   const dates=allDates();
   if(!dates.length)return toast("Brak danych do wyeksportowania");
-  if(await ensureObsDir()&&await ensurePerm()){
+  if(await vaultOk()){
     let n=0;
-    for(const ds of dates){await writeNote(`Day Menu ${ds}.md`,await buildNote(ds));n++;}
+    try{for(const ds of dates){await vaultWrite(`Day Menu ${ds}.md`,await buildNote(ds));n++;}}catch(e){}
     toast(`Zapisano ${n} notatek w vaulcie`);
   }else{
     for(const ds of dates)downloadText(`Day Menu ${ds}.md`,await buildNote(ds));
@@ -1677,9 +2050,41 @@ $("#obsPreview").onclick=async()=>{
   const box=$("#obsPreviewBox");
   box.hidden=false;box.value=await buildNote($("#obsDate").value||today());
 };
+/* automatyczna notatka dnia + kopia zapasowa */
+let _noteCache=null;
+async function autoNoteTick(){
+  if(!S.autoNote)return;
+  if(!(await vaultOk()))return;
+  const ds=today();
+  try{
+    _noteCache=await buildNote(ds);
+    await vaultWrite(`Day Menu ${ds}.md`,_noteCache);
+  }catch(e){}
+}
+setInterval(autoNoteTick,5*60*1000);
+setTimeout(autoNoteTick,15000);
+setTimeout(async()=>{
+  if(!S.autoBackup)return;
+  if(!(await vaultOk()))return;
+  if(S.lastBackup&&(Date.now()-new Date(S.lastBackup))/(864e5)<7)return;
+  try{
+    await vaultWrite("Day Menu - kopia danych.json",JSON.stringify(S,null,1));
+    S.lastBackup=today();save();
+    if($("#view-obsidian").classList.contains("active"))renderObsidian();
+  }catch(e){}
+},8000);
+if(isDesktop&&window.dayMenuAPI.onQuit)window.dayMenuAPI.onQuit(()=>{
+  ttStopTimer();save();
+  if(S.autoNote&&S.vaultPath&&_noteCache)window.dayMenuAPI.writeFile(S.vaultPath,`Day Menu ${today()}.md`,_noteCache);
+});
+setTimeout(()=>{
+  const n=dueCards().length;
+  if(n)notify("Fiszki do powtórki",`Masz dziś ${n} ${n===1?"fiszkę":n<5?"fiszki":"fiszek"} do powtórzenia.`);
+},3000);
 
 /* init */
 renderDash();
+showLogin();
 </script>
 </body>
 </html>
