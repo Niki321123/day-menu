@@ -643,7 +643,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
 <!-- ============ KONTO ============ -->
 <section class="view" id="view-account">
   <h1>Konto i logowanie</h1>
-  <p class="sub">Lokalny profil z hasłem — przy każdym uruchomieniu aplikacja poprosi o zalogowanie. Wszystko zostaje na tym urządzeniu.</p>
+  <p class="sub">Konto w chmurze synchronizuje dane między komputerem a telefonem. Dodatkowo możesz włączyć lokalną blokadę hasłem przy uruchamianiu.</p>
   <div id="accBox"></div>
 </section>
 
@@ -684,7 +684,7 @@ body.has-bg .list-item,body.has-bg .quiz-opt{background:color-mix(in srgb,var(--
 
 <script>
 /* ================= AUTO-AKTUALIZACJA ================= */
-const DM_BUILD=2;
+const DM_BUILD=3;
 const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
 (async()=>{
   if(!/^https?:/.test(DM_UPDATE_URL))return; // brak skonfigurowanego serwera aktualizacji
@@ -733,10 +733,10 @@ const DM_UPDATE_URL="https://niki321123.github.io/day-menu/";
 "use strict";
 /* ================= DATA ================= */
 const KEY="daymenu_v1";
-const defaults={theme:"light",moods:[],journal:[],goals:[],books:[],quizzes:[],decks:[],subjects:[],timelog:[],sched:{tasks:[]},pomoDone:0,sleep:[],appearance:null,habits:[],vaultPath:null,autoNote:true,autoBackup:true,lastBackup:null,jLock:null,account:null};
+const defaults={theme:"light",moods:[],journal:[],goals:[],books:[],quizzes:[],decks:[],subjects:[],timelog:[],sched:{tasks:[]},pomoDone:0,sleep:[],appearance:null,habits:[],vaultPath:null,autoNote:true,autoBackup:true,lastBackup:null,jLock:null,account:null,lastCloudSync:null};
 let S=load();
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));return Object.assign({},defaults,d||{})}catch(e){return {...defaults}}}
-function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));cloudQueuePush()}
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -1621,7 +1621,166 @@ function renderAccount(){
       S.account=null;save();renderAccount();toast("Logowanie wyłączone");
     };
   }
+  el.insertAdjacentHTML("afterbegin",cloudCard());
+  wireCloud();
 }
+
+/* ================= KONTO W CHMURZE (Supabase) — synchronizacja PC <-> telefon ================= */
+const SB_URL="https://ohaeqozswszudejxtwcb.supabase.co";
+const SB_KEY="sb_publishable_Xj3K46ULRL7mWoXo05fPmQ_T8LJKL48";
+const SB_SESS_KEY="daymenu_sb_session";
+let sbSession=null;
+try{sbSession=JSON.parse(localStorage.getItem(SB_SESS_KEY))}catch(e){}
+function sbSaveSession(s){sbSession=s;if(s)localStorage.setItem(SB_SESS_KEY,JSON.stringify(s));else localStorage.removeItem(SB_SESS_KEY)}
+async function sbAuth(path,body){
+  const r=await fetch(`${SB_URL}/auth/v1/${path}`,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.msg||j.error_description||j.message||("Błąd ("+r.status+")"));
+  return j;
+}
+async function sbToken(){
+  if(!sbSession)return null;
+  if(sbSession.expires_at&&sbSession.expires_at*1000>Date.now()+60000)return sbSession.access_token;
+  try{
+    const j=await sbAuth("token?grant_type=refresh_token",{refresh_token:sbSession.refresh_token});
+    if(!j.user)j.user=sbSession.user;
+    sbSaveSession(j);return j.access_token;
+  }catch(e){sbSaveSession(null);return null}
+}
+async function sbRest(method,qs,body){
+  const tok=await sbToken();
+  if(!tok)throw new Error("Niezalogowany");
+  const r=await fetch(`${SB_URL}/rest/v1/daymenu_data${qs}`,{
+    method,
+    headers:{apikey:SB_KEY,Authorization:"Bearer "+tok,"Content-Type":"application/json",
+      Prefer:method==="POST"?"resolution=merge-duplicates,return=minimal":"return=representation"},
+    body:body?JSON.stringify(body):undefined
+  });
+  if(!r.ok)throw new Error("Błąd serwera ("+r.status+")");
+  return method==="POST"?null:r.json();
+}
+let cloudTimer=null,cloudBusy=false;
+function cloudQueuePush(){
+  if(!sbSession)return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>cloudPush(false),4000);
+}
+async function cloudPush(showMsg){
+  if(!sbSession||cloudBusy)return;
+  cloudBusy=true;
+  try{
+    const now=new Date().toISOString();
+    S.lastCloudSync=now;
+    localStorage.setItem(KEY,JSON.stringify(S));
+    await sbRest("POST","?on_conflict=user_id",[{user_id:sbSession.user.id,data:S,updated_at:now}]);
+    const st=$("#sbStatus");
+    if(st)st.textContent="Ostatnia synchronizacja: "+new Date(now).toLocaleString("pl-PL");
+    if(showMsg)toast("Zsynchronizowano z chmurą");
+  }catch(e){if(showMsg)toast("Błąd synchronizacji — sprawdź internet")}
+  finally{cloudBusy=false}
+}
+async function cloudPull(){
+  const rows=await sbRest("GET","?select=data,updated_at");
+  return rows&&rows.length?rows[0]:null;
+}
+function applyCloud(row,goAccount){
+  const keepVault=S.vaultPath;
+  S=Object.assign({},defaults,row.data||{});
+  S.vaultPath=keepVault;
+  S.lastCloudSync=row.updated_at;
+  localStorage.setItem(KEY,JSON.stringify(S));
+  jKey=null;JR=null;
+  applyTheme();renderDash();
+  if(goAccount)show("account");
+}
+function cloudCard(){
+  if(!sbSession)return `<div class="card"><h2>Konto w chmurze — wspólne dane na PC i telefonie</h2>
+    <p class="muted" style="margin-bottom:var(--sp-3)">Zaloguj się tym samym kontem na komputerze i telefonie, a wszystkie dane (nastroje, dziennik, fiszki, nawyki…) będą się synchronizować automatycznie. Nagrania i zdjęcie tła pozostają lokalne na każdym urządzeniu.</p>
+    <div class="row">
+      <div class="field"><label class="fld">E-mail</label><input type="text" id="sbEmail" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label class="fld">Hasło (min. 6 znaków)</label><input type="password" id="sbPass" autocomplete="current-password"></div>
+    </div>
+    <div class="row" style="margin-top:var(--sp-3)">
+      <button class="btn" id="sbLogin">Zaloguj się</button>
+      <button class="btn ghost" id="sbSignup">Załóż konto</button>
+    </div>
+    <p class="muted" id="sbMsg" style="margin-top:var(--sp-2)"></p>
+  </div>`;
+  return `<div class="card"><h2>Konto w chmurze</h2>
+    <div class="row"><span class="badge b-good">Zalogowano</span><strong>${esc((sbSession.user&&sbSession.user.email)||"")}</strong></div>
+    <p class="muted" id="sbStatus" style="margin:var(--sp-2) 0">${S.lastCloudSync?"Ostatnia synchronizacja: "+new Date(S.lastCloudSync).toLocaleString("pl-PL"):"Jeszcze nie synchronizowano."}</p>
+    <div class="row">
+      <button class="btn" id="sbSync">Synchronizuj teraz</button>
+      <button class="btn ghost" id="sbPull">Pobierz z chmury</button>
+      <button class="btn danger" id="sbLogout">Wyloguj</button>
+    </div>
+    <p class="muted" style="margin-top:var(--sp-2)">Zmiany wysyłają się same kilka sekund po każdym zapisie.</p>
+  </div>`;
+}
+function wireCloud(){
+  if(!sbSession){
+    $("#sbLogin").onclick=()=>sbDoAuth(false);
+    $("#sbSignup").onclick=()=>sbDoAuth(true);
+    $("#sbPass").onkeydown=e=>{if(e.key==="Enter")sbDoAuth(false)};
+  }else{
+    $("#sbSync").onclick=async()=>{await cloudPush(true);renderAccount()};
+    $("#sbPull").onclick=async()=>{
+      if(!confirm("Pobrać dane z chmury i zastąpić dane na tym urządzeniu?"))return;
+      try{
+        const row=await cloudPull();
+        if(!row)return toast("W chmurze nie ma jeszcze danych");
+        applyCloud(row,true);toast("Dane pobrane z chmury");
+      }catch(e){toast("Błąd pobierania — sprawdź internet")}
+    };
+    $("#sbLogout").onclick=()=>{
+      if(!confirm("Wylogować z chmury? Dane pozostaną na tym urządzeniu, ale przestaną się synchronizować."))return;
+      sbSaveSession(null);renderAccount();toast("Wylogowano");
+    };
+  }
+}
+async function sbDoAuth(signup){
+  const email=$("#sbEmail").value.trim(),pass=$("#sbPass").value,msg=$("#sbMsg");
+  if(!/.+@.+\..+/.test(email))return msg.textContent="Podaj poprawny adres e-mail.";
+  if(pass.length<6)return msg.textContent="Hasło musi mieć min. 6 znaków.";
+  msg.textContent=signup?"Zakładanie konta…":"Logowanie…";
+  try{
+    if(signup){
+      const j=await sbAuth("signup",{email,password:pass});
+      if(j.access_token){sbSaveSession(j);await firstSync();renderAccount();toast("Konto utworzone — zalogowano")}
+      else msg.textContent="Konto utworzone. Potwierdź adres klikając link w e-mailu, a potem zaloguj się tutaj.";
+    }else{
+      const j=await sbAuth("token?grant_type=password",{email,password:pass});
+      sbSaveSession(j);
+      await firstSync();
+      renderAccount();toast("Zalogowano do chmury");
+    }
+  }catch(e){
+    msg.textContent=/invalid login credentials/i.test(e.message)?"Błędny e-mail lub hasło."
+      :/already registered/i.test(e.message)?"To konto już istnieje — użyj „Zaloguj się”."
+      :(e.message||"Błąd połączenia");
+  }
+}
+async function firstSync(){
+  try{
+    const row=await cloudPull();
+    if(row&&row.updated_at&&(!S.lastCloudSync||new Date(row.updated_at)>new Date(S.lastCloudSync))){
+      if(confirm("W chmurze są już dane (np. z innego urządzenia). Pobrać je na to urządzenie?\n\nOK = pobierz z chmury · Anuluj = wyślij dane z tego urządzenia do chmury"))
+        return applyCloud(row,true);
+    }
+    await cloudPush(false);
+  }catch(e){}
+}
+/* przy starcie: jeśli zalogowano, pobierz nowsze dane z chmury */
+setTimeout(async()=>{
+  if(!sbSession)return;
+  try{
+    const row=await cloudPull();
+    if(row&&row.updated_at&&(!S.lastCloudSync||new Date(row.updated_at)>new Date(S.lastCloudSync))){
+      applyCloud(row,false);
+      toast("Dane zaktualizowane z chmury");
+    }
+  }catch(e){}
+},2500);
 
 /* ================= EXPORT / IMPORT ================= */
 function doExport(){
